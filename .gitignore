@@ -1,0 +1,27 @@
+# --- Python ---
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+env/
+
+# --- Configuración y Claves Secretas (¡Muy Importante!) ---
+.env
+config.json
+*.secrets
+
+# --- Archivos Multimedia / Descargas de Música ---
+# Evita subir los archivos MP3, M4A o carpetas de música a GitHub
+*.mp3
+*.m4a
+*.webm
+mi_musica/
+downloads/
+
+# --- Interfaces Gráficas / IDEs ---
+.vscode/
+.idea/
+*.suo
+*.ntvs*
