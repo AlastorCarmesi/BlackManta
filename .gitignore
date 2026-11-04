@@ -19,9 +19,12 @@ config.json
 *.webm
 mi_musica/
 downloads/
+Pruebas/
+Songs_Downloaded/
 
 # --- Interfaces Gráficas / IDEs ---
 .vscode/
 .idea/
 *.suo
 *.ntvs*
+
