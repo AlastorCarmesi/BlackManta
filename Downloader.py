@@ -6,7 +6,7 @@ from pathlib import Path
 #Inicio de codigo
 CARPETA_DESCARGA = Path("Songs_Downloaded")
 
-#Metodo para crear la carpeta de almacenamiento de canciones
+#Metodo para crear la carpeta de almacenamiento 
 def create_folder(Nom_Playlist=None):
     # Crear la carpeta para las canciones 
     Ruta_Final = CARPETA_DESCARGA 
@@ -24,12 +24,16 @@ def clear_name(Nombre):
 def download_song(url):
     with yt_dlp.YoutubeDL({'quiet': True, "extract_flat": True}) as ydl:
         info = ydl.extract_info(url, download=False)
-        
-# Obtenemos el nombre de la playlist y creamos la carpeta correspondiente
-    Nom_Playlist = clear_name(info.get('title', 'Playlist'))
+
+    # Diagnostico (puedes borrarlo cuando todo funcione)
+    print("Tipo:", info.get("_type"))
+    print("Título crudo:", repr(info.get("title")))
+
+    titulo = info.get('title') or 'Playlist'
+    Nom_Playlist = clear_name(titulo) or 'Playlist'
+    print("Nombre final:", repr(Nom_Playlist))
     carpeta_descarga = create_folder(Nom_Playlist)
 
-# Configuracion de opciones para la descarga de canciones
     Opt = {
         'format': 'bestaudio/best',
         'outtmpl': str(carpeta_descarga / '%(title)s.%(ext)s'),
