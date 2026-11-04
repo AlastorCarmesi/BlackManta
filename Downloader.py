@@ -33,7 +33,8 @@ def download_song(url):
     Opt = {
         'format': 'bestaudio/best',
         'outtmpl': str(carpeta_descarga / '%(title)s.%(ext)s'),
-        'quiet': True,
+        'download_archive': str(carpeta_descarga / 'descargadas.txt'),
+        'quiet': False,
         'postprocessors': [{
             'key': 'FFmpegExtractAudio',
             'preferredcodec': 'mp3',
