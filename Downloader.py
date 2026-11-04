@@ -24,11 +24,7 @@ def clear_name(Nombre):
 def download_song(url):
     with yt_dlp.YoutubeDL({'quiet': True, "extract_flat": True}) as ydl:
         info = ydl.extract_info(url, download=False)
-
-    # Diagnostico (puedes borrarlo cuando todo funcione)
-    print("Tipo:", info.get("_type"))
-    print("Título crudo:", repr(info.get("title")))
-
+# Obtenemos el titulo de la playlist y lo limpiamos para crear la Subcarpeta
     titulo = info.get('title') or 'Playlist'
     Nom_Playlist = clear_name(titulo) or 'Playlist'
     print("Nombre final:", repr(Nom_Playlist))
