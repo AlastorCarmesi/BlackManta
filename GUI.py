@@ -83,5 +83,3 @@ class APP(ctk.CTk):
 
 if __name__ == "__main__":
     APP().mainloop()
-
-
