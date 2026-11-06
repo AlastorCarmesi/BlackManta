@@ -27,6 +27,7 @@ def build_options(carpeta_descarga):
      return {
         'format': 'bestaudio/best',
         'outtmpl': str(carpeta_descarga / '%(title)s.%(ext)s'),
+        'windowsfilenames': True,
         'download_archive': str(carpeta_descarga / 'descargadas.txt'),
         'quiet': True,
         'no_warnings': True,
@@ -47,11 +48,15 @@ def build_options(carpeta_descarga):
 def download_one(url, carpeta_descarga):
     try:
         with yt_dlp.YoutubeDL(build_options(carpeta_descarga)) as ydl:
-            ydl.download([url])
-        return True
+            ydl.download([url]) == 0
     except Exception as e:
         print(f"Error al descargar {url}: {e}")
         return False
+def load_downloaded(carpeta_descarga):
+    descargadas_file = carpeta_descarga / 'descargadas.txt'
+    if not descargadas_file.exists():
+        return set()
+    return {line.strip() for line in descargadas_file.read_text(encoding='utf-8').splitlines() if line.strip()}
 
 #Metodo para descargar canciones de una playlist
 def download_song(url):
@@ -66,22 +71,33 @@ def download_song(url):
 
     #Lista de URL individuales de la playlist
     entrada = [e for e in (info.get('entries') or []) if e]
-    urls = [e.get('url') or f"https://www.youtube.com/watch?v={e['id']}" 
-            for e in entrada]
+    downloaded = load_downloaded(carpeta_descarga)
 
-    total_canciones = len(urls)
-    print(f"Nombre de la playlist: {Nom_Playlist} total_canciones: {total_canciones}")
+    Pendientes = []
+    for e in entrada:
+        if e['id'] in downloaded:
+            continue
+        Pendientes.append((e['id'], e.get('url') or f"https://www.youtube.com/watch?v={e['id']}"))
+
+
+    print(f"Playlist: {Nom_Playlist} | Total: {len(entrada)} | "
+          f"Ya descargadas: {len(downloaded)} | Pendientes: {len(Pendientes)}")
     
-    ok, fallidas = 0,0
-    with ThreadPoolExecutor(max_workers=MAX_HILOS) as pool:
-        futures = [pool.submit(download_one, u, carpeta_descarga) for u in urls]
-        for i, future in enumerate(as_completed(futures), 1):
-            if future.result():
-                ok += 1
-            else:
-                fallidas += 1
-            print(f"Progreso: {i}/{total_canciones}", end="\r")
-
+    ok, fallidas = 0, []
+    pool = ThreadPoolExecutor(max_workers=MAX_HILOS) 
+    futures = {pool.submit(download_one, u, carpeta_descarga): vid for vid, u in Pendientes}
+    try: 
+            for i, future in enumerate(as_completed(futures), 1):
+                if future.result():
+                    ok += 1
+                else:
+                    fallidas += 1
+                print(f"Progreso: {i}/{Pendientes}", end="\r")
+    except KeyboardInterrupt:
+            print("\n Descarga cancelada...")
+            pool.shutdown(wait=False, cancel_futures=True)
+    if fallidas:
+        (carpeta_descarga / 'fallidas.txt').write_text('\n'.join(fallidas), encoding='utf-8')
 
     print(f"\nTerminado. Correctas: {ok} | Con error: {fallidas}")
     print(f"Carpeta: {carpeta_descarga.resolve()}")
