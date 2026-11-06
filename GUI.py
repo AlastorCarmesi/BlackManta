@@ -1,8 +1,38 @@
 #Librerias necesarias para la interfaz grafica
 import customtkinter as ctk
+import random
+import math 
+from pathlib import Path
 
 ctk.set_appearance_mode("dark")  # Modo oscuro
-ctk.set_default_color_theme("blue")  # Tema azul
+
+# -------------Paleta-----------------
+
+BG = "#14121a"
+Pink = "#ff2a5f"
+Black_Pink = "#6e1530"
+Cian = "#2ee6e6"
+Shiny_Cian = "#0f6b6b"
+Green = "#3dff9a"
+
+# -------------Recursos-----------------
+
+Ruta_Font = Path(__file__).parent / "Recursos" / "PressStart2P-Regular.ttf"
+Font = "Consolas"  # Fuente predeterminada
+if Ruta_Font.exists():
+    ctk.FontManager.load_font(Ruta_Font)
+    Font = "Press Start 2P"  # Fuente personalizada si existe
+
+# -------------Datos de ejemplo-----------------
+
+Songs = [
+    ("", ""), ("", "")
+    ("", ""), ("", "")
+    ("", ""), ("", "")
+    ("", ""), ("", "")
+    ("", ""), ("", "")
+]
+
 
 class APP(ctk.CTk):
     def __init__(self):
