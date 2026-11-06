@@ -19,7 +19,7 @@ class APP(ctk.CTk):
         self.crear_content()
         self.crear_player()
 
-        # -------------Panel izquierdo-----------------
+    # -------------Panel izquierdo-----------------
 
     def crear_sidebar(self):
         sidebar = ctk.CTkFrame(self, width=200, corner_radius=0)
@@ -31,7 +31,7 @@ class APP(ctk.CTk):
         for Text in ("Biblioteca", "Playlist", "Descargas"):
             ctk.CTkButton(sidebar, text=Text, anchor="w", height=36).pack(fill="x", padx=15, pady=5)
 
-        # -------------Panel Central-----------------
+    # -------------Panel Central-----------------
 
     def crear_content(self):
         Content = ctk.CTkFrame(self, fg_color="transparent")
@@ -54,7 +54,7 @@ class APP(ctk.CTk):
             ctk.CTkLabel(fila, text=f"Cancion de ejemplo {i}", anchor="w").grid(row=0, column=1, sticky="w")
             ctk.CTkLabel(fila, text="3:45", width=50).grid(row=0, column=2, padx=10)
 
-# -------------Panel Central-----------------
+    # -------------Panel Central-----------------
 
     def crear_player(self):
         barra = ctk.CTkFrame(self, height=90, corner_radius=0)
