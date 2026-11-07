@@ -1,13 +1,12 @@
-#Librerias necesarias para la interfaz grafica
+# Librerias necesarias para la interfaz grafica
 import customtkinter as ctk
 import random
-import math 
+import math
 from pathlib import Path
 
 ctk.set_appearance_mode("dark")  # Modo oscuro
 
-# -------------Paleta-----------------
-
+# ------------- Paleta -----------------
 BG = "#14121a"
 Pink = "#ff2a5f"
 Black_Pink = "#6e1530"
@@ -15,101 +14,135 @@ Cian = "#2ee6e6"
 Shiny_Cian = "#0f6b6b"
 Green = "#3dff9a"
 
-# -------------Recursos-----------------
-
+# ------------- Recursos -----------------
 Ruta_Font = Path(__file__).parent / "Recursos" / "PressStart2P-Regular.ttf"
 Font = "Consolas"  # Fuente predeterminada
 if Ruta_Font.exists():
-    ctk.FontManager.load_font(Ruta_Font)
+    ctk.FontManager.load_font(str(Ruta_Font))
     Font = "Press Start 2P"  # Fuente personalizada si existe
 
-# -------------Datos de ejemplo-----------------
-
+# ------------- Datos de ejemplo -----------------
 Songs = [
-    ("", ""), ("", "")
-    ("", ""), ("", "")
-    ("", ""), ("", "")
-    ("", ""), ("", "")
-    ("", ""), ("", "")
+    ("NEON_RUNNER", "03:12"), ("MIDNIGHT_GRID", "04:20"),
+    ("PIXEL", "02:30"), ("BLACK_WAVES", "03:45"),
+    ("LASER_DRIVE", "03:21"), ("ECHO_CITY", "04:11"),
+    ("STATIC_HEART", "03:30"), ("DARK_SIGNALIS", "04:00"),
+    ("VHS_DREAMS", "03:15"), ("SIGNALIS", "04:25"),
 ]
+
+
+def font(size, bold=False):
+    return ctk.CTkFont(family=Font, size=size, weight="bold" if bold else "normal")
 
 
 class APP(ctk.CTk):
     def __init__(self):
         super().__init__()
-        self.title("Blackmanta -Reproductor MP3")
+        self.title("Blackmanta - Reproductor MP3")
         self.geometry("1280x720")
-        self.minsize(640, 480)
+        self.minsize(900, 560)
+        self.configure(fg_color=BG)
 
-        #Columna 01 Contenido
-        self.grid_columnconfigure(1, weight=1)
-        self.grid_rowconfigure(0, weight=1)
+        # Columna 0 y fila 1 (zona central) se estiran
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(1, weight=1)
 
-        self.crear_sidebar()
-        self.crear_content()
-        self.crear_player()
+        random.seed(7)
+        self.amplitudes = [0.25 + 0.75 * abs(math.sin(i / 9)) * random.uniform(0.5, 1)
+                           for i in range(150)]
 
-    # -------------Panel izquierdo-----------------
+        self.crear_pestañas()
+        self.crear_principal()
+        self.crear_Pie()
 
-    def crear_sidebar(self):
-        sidebar = ctk.CTkFrame(self, width=200, corner_radius=0)
-        sidebar.grid(row = 0, column = 0, sticky = "nsew")
-        sidebar.grid_propagate(False)
+    # ------------- Pestañas superiores -----------------
+    def crear_pestañas(self):
+        barra = ctk.CTkFrame(self, fg_color="transparent")
+        barra.grid(row=0, column=0, sticky="ew", padx=40, pady=(25, 0))
 
-        ctk.CTkLabel(sidebar, text='Mi Musica', font=ctk.CTkFont(size=20, weight="bold")).pack(pady=(25, 20), padx=20)
+        Noms = ["BIBLIOTECA", "PLAYLISTS", "DESCARGAS", "REPRODUCTOR", "AJUSTES"]
+        for Nom in Noms:
+            active = Nom == "REPRODUCTOR"
+            ctk.CTkButton(barra, text=Nom, corner_radius=0, height=32,
+                          font=font(11, True), text_color=BG,
+                          fg_color=Cian if active else Pink,
+                          hover_color=Green).pack(side="left", padx=4)
 
-        for Text in ("Biblioteca", "Playlist", "Descargas"):
-            ctk.CTkButton(sidebar, text=Text, anchor="w", height=36).pack(fill="x", padx=15, pady=5)
+    # ------------- Zona central -----------------
+    def crear_principal(self):
+        principal = ctk.CTkFrame(self, fg_color="transparent")
+        principal.grid(row=1, column=0, sticky="nsew", padx=40, pady=30)
+        principal.grid_columnconfigure(1, weight=1)
+        principal.grid_rowconfigure(0, weight=1)
 
-    # -------------Panel Central-----------------
+        self.crear_list(principal)
+        self.crear_panel_player(principal)
 
-    def crear_content(self):
-        Content = ctk.CTkFrame(self, fg_color="transparent")
-        Content.grid(row=0, column=1, sticky="nsew", padx=20, pady=20)
-        Content.grid_columnconfigure(0, weight=1)
-        Content.grid_rowconfigure(1, weight=1)
-
-        ctk.CTkLabel(Content, text="Biblioteca", font=ctk.CTkFont(size=24, weight="bold")).grid(row=0, column=0, sticky="w", padx=10, pady=(0, 10))
-
-        # Lista de canciones
-        lista = ctk.CTkScrollableFrame(Content)
-        lista.grid(row=1, column=0, sticky="nsew")
+    def crear_list(self, parent):
+        lista = ctk.CTkScrollableFrame(parent, width=420, fg_color="transparent")
+        lista.grid(row=0, column=0, sticky="ns", padx=(0, 30))
         lista.grid_columnconfigure(0, weight=1)
 
-        for i in range(1, 16):
-            fila = ctk.CTkFrame(lista)
-            fila.grid(row=i, column=0, sticky="ew", pady=3)
-            fila.grid_columnconfigure(1, weight=1)
-            ctk.CTkLabel(fila, text=f"{i}", width=30).grid(row=0, column=0, padx=10, pady=8)
-            ctk.CTkLabel(fila, text=f"Cancion de ejemplo {i}", anchor="w").grid(row=0, column=1, sticky="w")
-            ctk.CTkLabel(fila, text="3:45", width=50).grid(row=0, column=2, padx=10)
+        for i, (Nom, Dur) in enumerate(Songs):
+            color = Green if i == 0 else Pink
+            ctk.CTkLabel(lista, text=Nom, text_color=color, anchor="w",
+                         font=font(13, True)).grid(row=i, column=0, sticky="w", pady=10)
+            ctk.CTkLabel(lista, text=Dur, text_color=color,
+                         font=font(13, True)).grid(row=i, column=1, padx=(20, 0))
 
-    # -------------Panel Central-----------------
+    def crear_panel_player(self, parent):
+        panel = ctk.CTkFrame(parent, fg_color="transparent")
+        panel.grid(row=0, column=1, sticky="nsew")
+        panel.grid_columnconfigure(0, weight=1)
+        panel.grid_rowconfigure(1, weight=1)
 
-    def crear_player(self):
-        barra = ctk.CTkFrame(self, height=90, corner_radius=0)
-        barra.grid(row=1, column=0, columnspan=2, sticky="ew")
-        barra.grid_propagate(False)
-        barra.grid_columnconfigure(1, weight=1)
+        ctk.CTkLabel(panel, text=Songs[0][0], text_color=Pink, anchor="w",
+                     font=font(24, True)).grid(row=0, column=0, sticky="w")
 
-        ctk.CTkLabel(barra, text="Ninguna cancion", width=200, anchor="w").grid(row=0, column=0, rowspan=2, padx=20)
+        self.onda = ctk.CTkCanvas(panel, bg=BG, highlightthickness=0, height=200)
+        self.onda.grid(row=1, column=0, sticky="nsew", pady=20)
+        self.onda.bind("<Configure>", self.draw_onda)
 
-        Center = ctk.CTkFrame(barra, fg_color="transparent")
-        Center.grid(row=0, column=1, rowspan=2, sticky="ew")
-        Center.grid_columnconfigure(0, weight=1)
+        ctk.CTkLabel(panel, text="-01:57", text_color=Pink, anchor="e",
+                     font=font(22, True)).grid(row=2, column=0, sticky="e")
 
-        Buttons = ctk.CTkFrame(Center, fg_color="transparent")
-        Buttons.grid(row=0, column=0, pady=(10,0))
-        for Symbol in ("⏮", "▶", "⏭"):
-            ctk.CTkButton(Buttons, text=Symbol, width=44, height=34).pack(side="left", padx=4)
+        barra = ctk.CTkProgressBar(panel, height=8, corner_radius=0,
+                                   fg_color=Black_Pink, progress_color=Pink)
+        barra.set(0.4)
+        barra.grid(row=3, column=0, sticky="ew", pady=(8, 20))
 
-        progress = ctk.CTkSlider(Center, from_=0, to=100)
-        progress.set(0)
-        progress.grid(row=1, column=0, sticky="ew", padx=20, pady=(8,0))
+        button = ctk.CTkFrame(panel, fg_color="transparent")
+        button.grid(row=4, column=0, sticky="w")
+        for symbol, color in (("▶", Cian), ("❚❚", Pink), ("■", Pink)):
+            ctk.CTkButton(button, text=symbol, width=64, height=64, corner_radius=0,
+                          fg_color=color, text_color=BG, hover_color=Green,
+                          font=font(18, True)).pack(side="left", padx=(0, 14))
 
-        Vol = ctk.CTkSlider(barra, from_=0, to=100, width=120)
-        Vol.set(50)
-        Vol.grid(row=0, column=2, rowspan=2, padx=20)
+    def draw_onda(self, event=None):
+        C = self.onda
+        C.delete("all")
+        W, H = C.winfo_width(), C.winfo_height()
+        centro = H // 2
+        Step = 8
+        for i, a in enumerate(self.amplitudes):
+            X = 10 + i * Step
+            if X > W - 10:
+                break
+            Alture = a * H * 0.45
+            C.create_line(X, centro - Alture, X, centro + Alture, fill=Shiny_Cian, width=5)
+            C.create_line(X, centro - Alture, X, centro + Alture, fill=Cian, width=2)
+
+    # ------------- Pie de pantalla -----------------
+    def crear_Pie(self):
+        pie = ctk.CTkFrame(self, fg_color="transparent")
+        pie.grid(row=2, column=0, sticky="ew", padx=40, pady=(0, 20))
+
+        ctk.CTkFrame(pie, height=3, fg_color=Pink, corner_radius=0).pack(fill="x", pady=(0, 10))
+        ctk.CTkLabel(pie, text="SELECCIONAR PISTA", text_color=Pink,
+                     font=font(10)).pack(side="left")
+        ctk.CTkLabel(pie, text="PLAY       PAUSE       STOP", text_color=Pink,
+                     font=font(10)).pack(side="right")
+
 
 if __name__ == "__main__":
     APP().mainloop()
