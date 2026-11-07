@@ -51,9 +51,26 @@ class APP(ctk.CTk):
         self.amplitudes = [0.25 + 0.75 * abs(math.sin(i / 9)) * random.uniform(0.5, 1)
                            for i in range(150)]
 
+        self.Screens = {}
+        self.buttons_tab = {}
+
         self.crear_pestañas()
         self.crear_principal()
+        self.crear_screen()
+        self.crear_downloads()
         self.crear_Pie()
+
+        self.show_screen("REPRODUCTOR")
+    # ------------- Navegacion -----------------
+    def show_screen(self, Nom):
+        if Nom not in self.Screens:
+            return
+        for frame in self.Screens.values():
+            frame.grid_remove()
+        self.Screens[Nom].grid()
+
+        for nom, button in self.buttons_tab.items():
+            button.configure(fg_color=Cian if nom == Nom else Pink)
 
     # ------------- Pestañas superiores -----------------
     def crear_pestañas(self):
@@ -131,8 +148,19 @@ class APP(ctk.CTk):
             Alture = a * H * 0.45
             C.create_line(X, centro - Alture, X, centro + Alture, fill=Shiny_Cian, width=5)
             C.create_line(X, centro - Alture, X, centro + Alture, fill=Cian, width=2)
+# ------------- Zona de descargas -----------------
+def crear_downloads(self):
+    panel = ctk.CTkFrame(self, fg_color="transparent")
+    panel.grid(row=1, column=0, sticky="nsew", padx=40, pady=30)
+    panel.grid_columnconfigure(0, weight=1)
+    panel.grid_rowconfigure(5, weight=1)
+    self.pantallas["DESCARGAS"] = panel
 
-    # ------------- Pie de pantalla -----------------
+    ctk.CTkLabel(panel, text="DESCARGAR PLAYLIST", text_color=Pink, anchor="w", font=font(24,True)).grid(row=0, column=0, sticky="w")
+    ctk.CTkLabel().grid()
+
+   
+# ------------- Pie de pantalla -----------------
     def crear_Pie(self):
         pie = ctk.CTkFrame(self, fg_color="transparent")
         pie.grid(row=2, column=0, sticky="ew", padx=40, pady=(0, 20))
