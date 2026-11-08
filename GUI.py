@@ -10,6 +10,7 @@ ctk.set_appearance_mode("dark")  # Modo oscuro
 BG = "#14121a"
 Pink = "#ff2a5f"
 Black_Pink = "#6e1530"
+Dim_Pink = "#a04060"
 Cian = "#2ee6e6"
 Shiny_Cian = "#0f6b6b"
 Green = "#3dff9a"
@@ -51,20 +52,20 @@ class APP(ctk.CTk):
         self.amplitudes = [0.25 + 0.75 * abs(math.sin(i / 9)) * random.uniform(0.5, 1)
                            for i in range(150)]
 
-        self.Screens = {}
-        self.buttons_tab = {}
+        self.Screens = {}       # nombre de pestaña -> frame de esa pantalla
+        self.buttons_tab = {}   # nombre de pestaña -> boton
 
         self.crear_pestañas()
         self.crear_principal()
-        self.crear_screen()
         self.crear_downloads()
         self.crear_Pie()
 
         self.show_screen("REPRODUCTOR")
+
     # ------------- Navegacion -----------------
     def show_screen(self, Nom):
         if Nom not in self.Screens:
-            return
+            return  # esa pestaña aun no tiene pantalla
         for frame in self.Screens.values():
             frame.grid_remove()
         self.Screens[Nom].grid()
@@ -79,18 +80,20 @@ class APP(ctk.CTk):
 
         Noms = ["BIBLIOTECA", "PLAYLISTS", "DESCARGAS", "REPRODUCTOR", "AJUSTES"]
         for Nom in Noms:
-            active = Nom == "REPRODUCTOR"
-            ctk.CTkButton(barra, text=Nom, corner_radius=0, height=32,
-                          font=font(11, True), text_color=BG,
-                          fg_color=Cian if active else Pink,
-                          hover_color=Green).pack(side="left", padx=4)
+            button = ctk.CTkButton(barra, text=Nom, corner_radius=0, height=32,
+                                   font=font(11, True), text_color=BG,
+                                   fg_color=Pink, hover_color=Green,
+                                   command=lambda n=Nom: self.show_screen(n))
+            button.pack(side="left", padx=4)
+            self.buttons_tab[Nom] = button
 
-    # ------------- Zona central -----------------
+    # ------------- Pantalla: Reproductor -----------------
     def crear_principal(self):
         principal = ctk.CTkFrame(self, fg_color="transparent")
         principal.grid(row=1, column=0, sticky="nsew", padx=40, pady=30)
         principal.grid_columnconfigure(1, weight=1)
         principal.grid_rowconfigure(0, weight=1)
+        self.Screens["REPRODUCTOR"] = principal
 
         self.crear_list(principal)
         self.crear_panel_player(principal)
@@ -148,19 +151,80 @@ class APP(ctk.CTk):
             Alture = a * H * 0.45
             C.create_line(X, centro - Alture, X, centro + Alture, fill=Shiny_Cian, width=5)
             C.create_line(X, centro - Alture, X, centro + Alture, fill=Cian, width=2)
-# ------------- Zona de descargas -----------------
-def crear_downloads(self):
-    panel = ctk.CTkFrame(self, fg_color="transparent")
-    panel.grid(row=1, column=0, sticky="nsew", padx=40, pady=30)
-    panel.grid_columnconfigure(0, weight=1)
-    panel.grid_rowconfigure(5, weight=1)
-    self.pantallas["DESCARGAS"] = panel
 
-    ctk.CTkLabel(panel, text="DESCARGAR PLAYLIST", text_color=Pink, anchor="w", font=font(24,True)).grid(row=0, column=0, sticky="w")
-    ctk.CTkLabel().grid()
+    # ------------- Pantalla: Descargas -----------------
+    def crear_downloads(self):
+        panel = ctk.CTkFrame(self, fg_color="transparent")
+        panel.grid(row=1, column=0, sticky="nsew", padx=40, pady=30)
+        panel.grid_columnconfigure(0, weight=1)
+        panel.grid_rowconfigure(5, weight=1)
+        self.Screens["DESCARGAS"] = panel
 
-   
-# ------------- Pie de pantalla -----------------
+        ctk.CTkLabel(panel, text="DESCARGAR PLAYLIST", text_color=Pink, anchor="w",
+                     font=font(24, True)).grid(row=0, column=0, sticky="w")
+        ctk.CTkLabel(panel, text="URL DE LA PLAYLIST", text_color=Dim_Pink, anchor="w",
+                     font=font(10)).grid(row=1, column=0, sticky="w", pady=(25, 6))
+
+        fila = ctk.CTkFrame(panel, fg_color="transparent")
+        fila.grid(row=2, column=0, sticky="ew")
+        fila.grid_columnconfigure(0, weight=1)
+
+        self.in_URL = ctk.CTkEntry(
+            fila, placeholder_text="INGRESA LA URL", height=48, corner_radius=0,
+            border_width=2, border_color=Pink, fg_color=BG, text_color=Cian,
+            placeholder_text_color=Dim_Pink, font=font(12))
+        self.in_URL.grid(row=0, column=0, sticky="ew", padx=(0, 14))
+
+        self.btn_download = ctk.CTkButton(
+            fila, text="DESCARGAR", width=170, height=48, corner_radius=0,
+            fg_color=Cian, text_color=BG, hover_color=Green, font=font(12, True))
+        self.btn_download.grid(row=0, column=1, padx=(0, 10))
+
+        self.btn_cancel = ctk.CTkButton(
+            fila, text="CANCELAR", width=170, height=48, corner_radius=0,
+            fg_color=Pink, text_color=BG, hover_color=Green, font=font(12, True))
+        self.btn_cancel.grid(row=0, column=2)
+
+        stats = ctk.CTkFrame(panel, fg_color="transparent")
+        stats.grid(row=3, column=0, sticky="ew", pady=(25, 0))
+        self.stat_labels = {}
+        datos = ("TOTAL", "DESCARGADAS", "PENDIENTES", "CON_ERROR")
+        for i, title in enumerate(datos):
+            stats.grid_columnconfigure(i, weight=1)
+            box = ctk.CTkFrame(stats, fg_color="transparent", border_width=2,
+                               border_color=Pink, corner_radius=0)
+            box.grid(row=0, column=i, sticky="ew", padx=(0 if i == 0 else 10, 0))
+            valor = ctk.CTkLabel(box, text="0", text_color=Cian, font=font(22, True))
+            valor.pack(pady=(14, 4))
+            ctk.CTkLabel(box, text=title, text_color=Pink, font=font(9)).pack(pady=(0, 12))
+            self.stat_labels[title] = valor
+
+        progress = ctk.CTkFrame(panel, fg_color="transparent")
+        progress.grid(row=4, column=0, sticky="ew", pady=(25, 20))
+        progress.grid_columnconfigure(0, weight=1)
+
+        ctk.CTkLabel(progress, text="PROGRESO", text_color=Pink, anchor="w",
+                     font=font(10)).grid(row=0, column=0, sticky="w")
+        self.lbl_progress = ctk.CTkLabel(progress, text="0/0", text_color=Pink,
+                                         anchor="e", font=font(10))
+        self.lbl_progress.grid(row=0, column=1, sticky="e")
+
+        self.bar_download = ctk.CTkProgressBar(
+            progress, height=8, corner_radius=0,
+            fg_color=Black_Pink, progress_color=Pink)
+        self.bar_download.set(0)
+        self.bar_download.grid(row=1, column=0, columnspan=2, sticky="ew", pady=(8, 0))
+
+        self.console = ctk.CTkTextbox(
+            panel, corner_radius=0, border_width=2, border_color=Pink,
+            fg_color=BG, text_color=Green, font=font(10))
+        self.console.grid(row=5, column=0, sticky="nsew")
+        self.console.insert("end", "> ESPERANDO URL...\n")
+        self.console.insert("end", "> EJEMPLO: PLAYLIST DETECTADA\n")
+        self.console.insert("end", "> EJEMPLO: DESCARGANDO 3/120\n")
+        self.console.configure(state="disabled")
+
+    # ------------- Pie de pantalla -----------------
     def crear_Pie(self):
         pie = ctk.CTkFrame(self, fg_color="transparent")
         pie.grid(row=2, column=0, sticky="ew", padx=40, pady=(0, 20))
