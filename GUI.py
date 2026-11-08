@@ -4,9 +4,8 @@ import random
 import math
 from pathlib import Path
 
-ctk.set_appearance_mode("dark")  # Modo oscuro
-
 # ------------- Paleta -----------------
+ctk.set_appearance_mode("dark")  # Modo oscuro
 BG = "#14121a"
 Pink = "#ff2a5f"
 Black_Pink = "#6e1530"
