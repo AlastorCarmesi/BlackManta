@@ -3,6 +3,9 @@ import customtkinter as ctk
 import random
 import math
 from pathlib import Path
+import queue
+import threading
+from Downloader import download_song
 
 # ------------- Paleta -----------------
 ctk.set_appearance_mode("dark")  # Modo oscuro
@@ -53,6 +56,9 @@ class APP(ctk.CTk):
 
         self.Screens = {}       # nombre de pestaña -> frame de esa pantalla
         self.buttons_tab = {}   # nombre de pestaña -> boton
+        self.cola = queue.Queue()
+        self.cancel_event = threading.Event()
+        self.downloading = False
 
         self.crear_pestañas()
         self.crear_principal()
@@ -60,6 +66,7 @@ class APP(ctk.CTk):
         self.crear_Pie()
 
         self.show_screen("REPRODUCTOR")
+        self.after(100, self.procesar_cola)
 
     # ------------- Navegacion -----------------
     def show_screen(self, Nom):
