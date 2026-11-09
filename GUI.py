@@ -29,14 +29,24 @@ if Ruta_Font.exists():
     Font = "Press Start 2P"  # Fuente personalizada si existe
 
 # ------------- Datos de ejemplo -----------------
-Songs = [
-    ("NEON_RUNNER", "03:12"), ("MIDNIGHT_GRID", "04:20"),
-    ("PIXEL", "02:30"), ("BLACK_WAVES", "03:45"),
-    ("LASER_DRIVE", "03:21"), ("ECHO_CITY", "04:11"),
-    ("STATIC_HEART", "03:30"), ("DARK_SIGNALIS", "04:00"),
-    ("VHS_DREAMS", "03:15"), ("SIGNALIS", "04:25"),
-]
+def format_tmp(segundos):
+    m, s = divmod(int(segundos), 60)
+    return f"{m:02d}{s:02d}"
 
+def short_name(texto, limite):
+    return texto if len(texto) <= limite else texto[:limite - 1] + "…"
+
+def escanear_biblioteca():
+    canciones = []
+    if not CARPETA_DESCARGA.exists():
+        return canciones
+    for ruta in sorted(CARPETA_DESCARGA.rglob("*.mp3")):
+        try:
+            duracion = format_tmp(MP3(ruta).info.length)
+        except Exception:
+            duracion = "--:--"
+        canciones.append([{"nombre": ruta.stem, "duracion": duracion, "ruta": ruta}])
+    return canciones
 
 def font(size, bold=False):
     return ctk.CTkFont(family=Font, size=size, weight="bold" if bold else "normal")
@@ -65,6 +75,7 @@ class APP(ctk.CTk):
         self.downloading = False
 
         self.crear_pestañas()
+        self.canciones = escanear_biblioteca()
         self.crear_principal()
         self.crear_downloads()
         self.crear_Pie()
