@@ -5,6 +5,10 @@ import math
 from pathlib import Path
 import queue
 import threading
+from mutagen.mp3 import MP3
+
+#Funciones del archivo Downloader.py
+from Downloader import download_song, CARPETA_DESCARGA
 from Downloader import download_song
 
 # ------------- Paleta -----------------
