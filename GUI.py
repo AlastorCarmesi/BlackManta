@@ -282,7 +282,6 @@ class APP(ctk.CTk):
         self.console.configure(state="disabled")
 
     def iniciar_descarga(self):
-        self.btn_cancel.configure(state="normal")
         if self.downloading:
             return
         url = self.in_URL.get().strip()
@@ -293,6 +292,7 @@ class APP(ctk.CTk):
         self.descargando = True
         self.cancel_event.clear()
         self.btn_download.configure(state="disabled")
+        self.btn_cancel.configure(state="normal")
         self.bar_download.set(0)
         self.lbl_progress.configure("0/0")
         for etiqueta in self.stat_labels.values():
