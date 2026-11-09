@@ -294,7 +294,7 @@ class APP(ctk.CTk):
         self.btn_download.configure(state="disabled")
         self.btn_cancel.configure(state="normal")
         self.bar_download.set(0)
-        self.lbl_progress.configure("0/0")
+        self.lbl_progress.configure(text="0/0")
         for etiqueta in self.stat_labels.values():
             etiqueta.configure(text="0")
         self.clear_console()
