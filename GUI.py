@@ -66,7 +66,56 @@ class APP(ctk.CTk):
         self.crear_Pie()
 
         self.show_screen("REPRODUCTOR")
+        self.protocol("WM_DELETE_WINDOW", self.al_cerrar)
         self.after(100, self.procesar_cola)
+
+    # -------------Consola-----------------
+    def escribir_console(self, texto):
+        self.console.configure(state="normal")
+        self.console.insert("end", f">{texto}\n")
+        self.console.see("end")
+        self.console.configure(state="disabled")
+
+    def clear_console(self):
+        self.console.configure(state="normal")
+        self.console.delete("1.0", "end")
+        self.console.configure(state="disabled")
+
+    def procesar_cola(self):
+        try:
+            while True:
+                self.manejar_event(self.cola.get_nowait())
+        except queue.Empty:
+            pass
+        self.after(100, self.procesar_cola)
+
+    def manage_event(self, ev):
+        tipo = ev["tipo"]
+        if tipo == "log":
+            self.escribir_console(ev["texto"])
+
+        elif tipo == "info":
+            self.stat_labels["TOTAL"].configure(text=str(ev["total"]))
+            self.stat_labels["DESCARGADAS"].configure(text=str(ev["ya"]))
+            self.stat_labels["PENDIENTES"].configure(text=str(ev["pendientes"]))
+            self.lbl_progress.configure(text=f"0/{ev['pendientes']}")
+            self.escribir_console(f"PLAYLIST: {ev['playlist']}") 
+
+        elif tipo == "progreso":
+            total = ev["total"]
+            self.bar_download.set(ev["hechas"] / total if total else 0)
+            self.lbl_progress.configure(text=f"{ev['hechas']}/{total}")
+            self.stat_labels["DESCARGADAS"].configure(text=str(ev["ya"] + ev["ok"]))
+            self.stat_labels["PENDIENTES"].configure(
+                text=str(total - ev["ok"] - ev["fallidas"]))
+            self.stat_labels["CON_ERROR"].configure(text=str(ev["fallidas"]))
+
+        elif tipo == "fin":
+            self.descargando = False
+            self.btn_download.configure(state="normal")
+            self.btn_cancel.configure(state="disabled")
+            estado = "DESCARGA CANCELADA" if ev.get("cancelado") else "DESCARGA TERMINADA"
+            self.escribir_console(f"{estado} | OK: {ev['ok']} | ERROR: {ev['fallidas']}")
 
     # ------------- Navegacion -----------------
     def show_screen(self, Nom):
@@ -180,15 +229,17 @@ class APP(ctk.CTk):
             border_width=2, border_color=Pink, fg_color=BG, text_color=Cian,
             placeholder_text_color=Dim_Pink, font=font(12))
         self.in_URL.grid(row=0, column=0, sticky="ew", padx=(0, 14))
+        self.in_URL.bind("<Return>", lambda e: self.iniciar_descarga())
 
         self.btn_download = ctk.CTkButton(
             fila, text="DESCARGAR", width=170, height=48, corner_radius=0,
-            fg_color=Cian, text_color=BG, hover_color=Green, font=font(12, True))
+            fg_color=Cian, text_color=BG, hover_color=Green, font=font(12, True), command=self.iniciar_descarga)
         self.btn_download.grid(row=0, column=1, padx=(0, 10))
 
         self.btn_cancel = ctk.CTkButton(
             fila, text="CANCELAR", width=170, height=48, corner_radius=0,
-            fg_color=Pink, text_color=BG, hover_color=Green, font=font(12, True))
+            fg_color=Pink, text_color=BG, hover_color=Green, font=font(12, True),
+            command=self.cancelar_download, state="disabled")
         self.btn_cancel.grid(row=0, column=2)
 
         stats = ctk.CTkFrame(panel, fg_color="transparent")
@@ -229,6 +280,44 @@ class APP(ctk.CTk):
         self.console.insert("end", "> EJEMPLO: PLAYLIST DETECTADA\n")
         self.console.insert("end", "> EJEMPLO: DESCARGANDO 3/120\n")
         self.console.configure(state="disabled")
+
+    def iniciar_descarga(self):
+        self.btn_cancel.configure(state="normal")
+        if self.downloading:
+            return
+        url = self.in_URL.get().strip()
+        if not url:
+            self.escribir_console("Inserta la URL")
+            return
+
+        self.descargando = True
+        self.cancel_event.clear()
+        self.btn_download.configure(state="disabled")
+        self.bar_download.set(0)
+        self.lbl_progress.configure("0/0")
+        for etiqueta in self.stat_labels.values():
+            etiqueta.configure(text="0")
+        self.clear_console()
+
+        hilo = threading.Thread(target=self.work_download, args=(url,), daemon=True)
+        hilo.start()
+
+    def work_download(self, url):
+        try:
+            download_song(url, on_event=self.cola.put, cancel_event=self.cancel_event)
+        except Exception as e:
+            self.cola.put({"tipo": "log", "texto": f"ERROR: {e}"})
+            self.cola.put({"tipo": "fin", "ok": 0, "fallidas": 0, "cancelado": False})   
+
+    def cancelar_download(self):
+        if self.descargando:
+            self.cancel_event.set()
+            self.btn_cancel.configure(state="disabled")
+            self.escribir_console("CANCELANDO... ")
+
+    def al_cerrar(self):
+        self.cancel_event.set()
+        self.destroy()
 
     # ------------- Pie de pantalla -----------------
     def crear_Pie(self):
