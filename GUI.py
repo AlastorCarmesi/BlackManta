@@ -111,7 +111,7 @@ class APP(ctk.CTk):
             self.stat_labels["CON_ERROR"].configure(text=str(ev["fallidas"]))
 
         elif tipo == "fin":
-            self.descargando = False
+            self.downloading = False
             self.btn_download.configure(state="normal")
             self.btn_cancel.configure(state="disabled")
             estado = "DESCARGA CANCELADA" if ev.get("cancelado") else "DESCARGA TERMINADA"
@@ -289,7 +289,7 @@ class APP(ctk.CTk):
             self.escribir_console("Inserta la URL")
             return
 
-        self.descargando = True
+        self.downloading = True
         self.cancel_event.clear()
         self.btn_download.configure(state="disabled")
         self.btn_cancel.configure(state="normal")
@@ -310,7 +310,7 @@ class APP(ctk.CTk):
             self.cola.put({"tipo": "fin", "ok": 0, "fallidas": 0, "cancelado": False})   
 
     def cancelar_download(self):
-        if self.descargando:
+        if self.downloading:
             self.cancel_event.set()
             self.btn_cancel.configure(state="disabled")
             self.escribir_console("CANCELANDO... ")
