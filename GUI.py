@@ -169,17 +169,10 @@ class APP(ctk.CTk):
         self.crear_panel_player(principal)
 
     def crear_list(self, parent):
-        lista = ctk.CTkScrollableFrame(parent, width=420, fg_color="transparent")
-        lista.grid(row=0, column=0, sticky="ns", padx=(0, 30))
-        lista.grid_columnconfigure(0, weight=1)
-
-        for i, (Nom, Dur) in enumerate(Songs):
-            color = Green if i == 0 else Pink
-            ctk.CTkLabel(lista, text=Nom, text_color=color, anchor="w",
-                         font=font(13, True)).grid(row=i, column=0, sticky="w", pady=10)
-            ctk.CTkLabel(lista, text=Dur, text_color=color,
-                         font=font(13, True)).grid(row=i, column=1, padx=(20, 0))
-
+        self.lista = ctk.CTkScrollableFrame(parent, width=420, fg_color="transparent")
+        self.lista.grid(row=0, column=0, sticky="ns", padx=(0, 30))
+        self.lista.grid_columnconfigure(0, weight=1)
+        self.poblar_lista()
     def crear_panel_player(self, parent):
         panel = ctk.CTkFrame(parent, fg_color="transparent")
         panel.grid(row=0, column=1, sticky="nsew")
