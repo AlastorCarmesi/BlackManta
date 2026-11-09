@@ -84,7 +84,7 @@ class APP(ctk.CTk):
     def procesar_cola(self):
         try:
             while True:
-                self.manejar_event(self.cola.get_nowait())
+                self.manage_event(self.cola.get_nowait())
         except queue.Empty:
             pass
         self.after(100, self.procesar_cola)
