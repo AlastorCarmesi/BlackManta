@@ -9,7 +9,6 @@ from mutagen.mp3 import MP3
 
 #Funciones del archivo Downloader.py
 from Downloader import download_song, CARPETA_DESCARGA
-from Downloader import download_song
 
 # ------------- Paleta -----------------
 ctk.set_appearance_mode("dark")  # Modo oscuro
@@ -31,7 +30,7 @@ if Ruta_Font.exists():
 # ------------- Datos de ejemplo -----------------
 def format_tmp(segundos):
     m, s = divmod(int(segundos), 60)
-    return f"{m:02d}{s:02d}"
+    return f"{m:02d}:{s:02d}"
 
 def short_name(texto, limite):
     return texto if len(texto) <= limite else texto[:limite - 1] + "…"
@@ -45,7 +44,7 @@ def escanear_biblioteca():
             duracion = format_tmp(MP3(ruta).info.length)
         except Exception:
             duracion = "--:--"
-        canciones.append([{"nombre": ruta.stem, "duracion": duracion, "ruta": ruta}])
+        canciones.append({"nombre": ruta.stem, "duracion": duracion, "ruta": ruta})
     return canciones
 
 def font(size, bold=False):
