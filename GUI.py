@@ -173,14 +173,34 @@ class APP(ctk.CTk):
         self.lista.grid(row=0, column=0, sticky="ns", padx=(0, 30))
         self.lista.grid_columnconfigure(0, weight=1)
         self.poblar_lista()
+
+    def poblar_lista(self):
+        for widget in self.lista.winfo_children():
+            widget.destroy()
+
+        if not self.canciones:
+            ctk.CTkLabel(self.lista, text="SIN CANCIONES\n Descarga una Playlist",
+                         text_color= Black_Pink, justify="left",
+                         font=font(11)).grid(row=0, column=0, sticky="w", pady=10)
+            return
+
+        for i, c in enumerate(self.canciones):
+            color = Green if i == 0 else Pink
+            ctk.CTkLabel(self.lista, text=short_name(C["nombre"], 24), anchor="w", font=font(13, True)).grid(row=i, column=0, sticky="w", pady=10)
+            ctk.CTkLabel(self.lista, text=c["duracion"], text_color=color, font=font(13, True)).grid(row=i, column=1, padx=(20, 0))
+
+    def refresh_biblioteca(self):
+        self.canciones = escanear_biblioteca()
+        self.poblar_lista()
+    
     def crear_panel_player(self, parent):
         panel = ctk.CTkFrame(parent, fg_color="transparent")
         panel.grid(row=0, column=1, sticky="nsew")
         panel.grid_columnconfigure(0, weight=1)
         panel.grid_rowconfigure(1, weight=1)
-
-        ctk.CTkLabel(panel, text=Songs[0][0], text_color=Pink, anchor="w",
-                     font=font(24, True)).grid(row=0, column=0, sticky="w")
+        titulo = self.canciones[0]["nombre"] if self.canciones else "SIN CANCION"
+        self.lbl_titulo = ctk.CTkLabel(panel, text=short_name(titulo, 22),text_color=Pink, anchor="w", font=font(24, True))
+        self.lbl_titulo.grid(row=0, column=0, sticky="w")
 
         self.onda = ctk.CTkCanvas(panel, bg=BG, highlightthickness=0, height=200)
         self.onda.grid(row=1, column=0, sticky="nsew", pady=20)
