@@ -131,6 +131,7 @@ class APP(ctk.CTk):
             self.btn_cancel.configure(state="disabled")
             estado = "DESCARGA CANCELADA" if ev.get("cancelado") else "DESCARGA TERMINADA"
             self.escribir_console(f"{estado} | OK: {ev['ok']} | ERROR: {ev['fallidas']}")
+            self.refresh_biblioteca()
 
     # ------------- Navegacion -----------------
     def show_screen(self, Nom):
