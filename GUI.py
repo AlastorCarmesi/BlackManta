@@ -186,7 +186,7 @@ class APP(ctk.CTk):
 
         for i, c in enumerate(self.canciones):
             color = Green if i == 0 else Pink
-            ctk.CTkLabel(self.lista, text=short_name(C["nombre"], 24), anchor="w", font=font(13, True)).grid(row=i, column=0, sticky="w", pady=10)
+            ctk.CTkLabel(self.lista, text=short_name(c["nombre"], 24), anchor="w", font=font(13, True)).grid(row=i, column=0, sticky="w", pady=10)
             ctk.CTkLabel(self.lista, text=c["duracion"], text_color=color, font=font(13, True)).grid(row=i, column=1, padx=(20, 0))
 
     def refresh_biblioteca(self):
