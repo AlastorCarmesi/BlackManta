@@ -1,5 +1,7 @@
 # Librerias necesarias para la interfaz grafica
 import customtkinter as ctk
+import json
+import tkinter as tk
 import random
 import math
 from pathlib import Path
@@ -27,6 +29,7 @@ if Ruta_Font.exists():
     ctk.FontManager.load_font(str(Ruta_Font))
     Font = "Press Start 2P"  # Fuente personalizada si existe
 
+RUTA_CACHE = Path(__file__).parent / "biblioteca_cache.json"
 # ------------- Datos de ejemplo -----------------
 def format_tmp(segundos):
     m, s = divmod(int(segundos), 60)
@@ -39,13 +42,43 @@ def escanear_biblioteca():
     canciones = []
     if not CARPETA_DESCARGA.exists():
         return canciones
+
+    try:
+        cache = json.loads(RUTA_CACHE.read_text(encoding="utf-8"))
+    except Exception:
+        cache = {}
+
+    nuevo_cache = {}
     for ruta in sorted(CARPETA_DESCARGA.rglob("*.mp3")):
         try:
-            duracion = format_tmp(MP3(ruta).info.length)
-        except Exception:
-            duracion = "--:--"
-        canciones.append({"nombre": ruta.stem, "duracion": duracion, "ruta": ruta})
-    return canciones
+            st = ruta.stat()
+        except OSError:
+            continue
+
+        dato = cache.get(str(ruta))
+        if dato and dato.get("mtime") == st.st_mtime and dato.get("size") == st.st_size:
+            segundos = dato["seg"]
+        else:
+            try:
+                segundos = MP3(ruta).info.length
+            except Exception:
+                segundos = None
+
+            if segundos is not None:
+                nuevo_cache[str(ruta)] = {"mtime": st.st_mtime, "size": st.st_size, "seg": segundos}
+
+            canciones.append({
+                "nombre": ruta.stem,
+                "duracion": format_tmp(segundos) if segundos is not None else "--:--",
+                "segundos": segundos,
+                "ruta": ruta,
+            }) 
+        if nuevo_cache != cache:
+            try:
+                RUTA_CACHE.write_text(json.dumps(nuevo_cache), encoding="utf-8")
+            except Exception:
+                pass
+            return canciones
 
 def font(size, bold=False):
     return ctk.CTkFont(family=Font, size=size, weight="bold" if bold else "normal")
@@ -74,7 +107,7 @@ class APP(ctk.CTk):
         self.downloading = False
 
         self.crear_pestañas()
-        self.canciones = escanear_biblioteca()
+        self.canciones = []
         self.indice_actual = 0
         self.filas = []
         self.crear_principal()
@@ -84,6 +117,7 @@ class APP(ctk.CTk):
         self.show_screen("REPRODUCTOR")
         self.protocol("WM_DELETE_WINDOW", self.al_cerrar)
         self.after(100, self.procesar_cola)
+        self.refresh_biblioteca()
 
     # -------------Consola-----------------
     def escribir_console(self, texto):
