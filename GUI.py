@@ -105,6 +105,7 @@ class APP(ctk.CTk):
         self.cola = queue.Queue()
         self.cancel_event = threading.Event()
         self.downloading = False
+        self.onda_job = None
 
         self.crear_pestañas()
         self.canciones = []
@@ -229,7 +230,6 @@ class APP(ctk.CTk):
         self.lista.bind("<<ListboxSelect>>", self.al_seleccionar)
         self.poblar_lista()
         
-
     def poblar_lista(self):
         self.lista.delete(0, "end")
 
@@ -256,6 +256,13 @@ class APP(ctk.CTk):
         else:
             nombre = "SIN CANCION"
         self.lbl_titulo.configure(text=short_name(nombre, 22))
+
+    def al_seleccionar(self, event=None):
+        if not self.canciones:
+            return
+        seleccion = self.lista.curselection()
+        if seleccion:
+            self.seleccionar_cancion(seleccion[0])
 
     def seleccionar_cancion(self, indice):
         self.indice_actual = indice
