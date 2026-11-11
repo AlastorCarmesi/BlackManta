@@ -109,7 +109,6 @@ class APP(ctk.CTk):
         self.crear_pestañas()
         self.canciones = []
         self.indice_actual = 0
-        self.filas = []
         self.crear_principal()
         self.crear_downloads()
         self.crear_Pie()
@@ -143,6 +142,11 @@ class APP(ctk.CTk):
         tipo = ev["tipo"]
         if tipo == "log":
             self.escribir_console(ev["texto"])
+
+        elif tipo == "biblioteca":
+            self.canciones = ev["canciones"]
+            self.poblar_lista()
+            self.actualizar_titulo()
 
         elif tipo == "info":
             self.stat_labels["TOTAL"].configure(text=str(ev["total"]))
@@ -205,43 +209,46 @@ class APP(ctk.CTk):
         self.crear_panel_player(principal)
 
     def crear_list(self, parent):
-        self.lista = ctk.CTkScrollableFrame(parent, width=420, fg_color="transparent")
-        self.lista.grid(row=0, column=0, sticky="ns", padx=(0, 30))
-        self.lista.grid_columnconfigure(0, weight=1)
+        marco = ctk.CTkScrollableFrame(parent, width=420, fg_color="transparent")
+        marco.grid(row=0, column=0, sticky="ns", padx=(0, 30))
+        marco.grid_propagate(False)
+        marco.grid_rowconfigure(0, weight=1)
+        marco.grid_columnconfigure(0, weight=1)
+
+        self.lista = tk.Listbox(
+            marco, bg=BG, fg=Pink, selectbackground="#1f1b29", selectforeground=Green,
+            font=(Font, 10, "bold"), bd=0, highlightthickness=0,
+            activestyle="none", exportselection=False)
+        self.lista.grid(row=0, column=0, sticky="nsew")
+
+        scroll = ctk.CTkScrollbar(marco, command=self.lista.yview,
+                                  button_color=Pink, button_hover_color=Green)
+        scroll.grid(row=0, column=1, sticky="ns")
+        self.lista.configure(yscrollcommand=scroll.set)
+
+        self.lista.bind("<<ListboxSelect>>", self.al_seleccionar)
         self.poblar_lista()
+        
 
     def poblar_lista(self):
-        for widget in self.lista.winfo_children():
-            widget.destroy()
-        self.filas = []
+        self.lista.delete(0, "end")
 
         if not self.canciones:
-            ctk.CTkLabel(self.lista, text="SIN CANCIONES\n Descarga una Playlist",
-                         text_color= Black_Pink, justify="left",
-                         font=font(11)).grid(row=0, column=0, sticky="w", pady=10)
+            self.lista.insert("end", "SIN CANCIONES")
             return
-
         if self.indice_actual >= len(self.canciones):
             self.indice_actual = 0
 
-        for i, c in enumerate(self.canciones):
-            lbl_nombre = ctk.CTkLabel(self.lista, text=short_name(c["nombre"], 24), 
-                                             anchor="w", font=font(13, True))
-            lbl_nombre.grid(row=i, column=0, sticky="w", pady=10)
-            lbl_dur = ctk.CTkLabel(self.lista, text=c["duracion"], font=font(13, True))
-            lbl_dur.grid(row=i, column=1, padx=(20, 0))
-
-            for lbl in (lbl_nombre, lbl_dur):
-                lbl.bind("<Button-1>", lambda e, idx=i: self.seleccionar_cancion(idx))
-            self.filas.append((lbl_nombre, lbl_dur))
-
+        lineas = [f"{short_name(c['nombre'], 22).ljust(22)} {c['duracion']}"
+                  for c in self.canciones]
+        self.lista.insert("end", *lineas)
         self.resaltar_seleccion()
 
     def resaltar_seleccion(self):
-        for i, (lbl_nombre, lbl_dur) in enumerate(self.filas):
-            color = Green if i == self.indice_actual else Pink
-            lbl_nombre.configure(text_color=color)
-            lbl_dur.configure(text_color=color)
+        self.lista.selection_clear(0, "end")
+        if self.canciones:
+            self.lista.selection_set(self.indice_actual)
+            self.lista.see(self.indice_actual)
 
     def actualizar_titulo(self):
         if self.canciones:
@@ -252,13 +259,15 @@ class APP(ctk.CTk):
 
     def seleccionar_cancion(self, indice):
         self.indice_actual = indice
-        self.resaltar_seleccion()
+
         self.actualizar_titulo()
     
     def refresh_biblioteca(self):
-        self.canciones = escanear_biblioteca()
-        self.poblar_lista()
-        self.actualizar_titulo()
+        hilo = threading.Thread(target=self.work_scan, daemon=True)
+        hilo.start()
+
+    def work_scan(self):
+        self.cola.put({"tipo": "biblioteca", "canciones": escanear_biblioteca()})
     
     def crear_panel_player(self, parent):
         panel = ctk.CTkFrame(parent, fg_color="transparent")
