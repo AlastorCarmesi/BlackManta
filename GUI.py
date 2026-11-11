@@ -75,6 +75,8 @@ class APP(ctk.CTk):
 
         self.crear_pestañas()
         self.canciones = escanear_biblioteca()
+        self.indice_actual = 0
+        self.filas = []
         self.crear_principal()
         self.crear_downloads()
         self.crear_Pie()
@@ -177,6 +179,7 @@ class APP(ctk.CTk):
     def poblar_lista(self):
         for widget in self.lista.winfo_children():
             widget.destroy()
+        self.filas = []
 
         if not self.canciones:
             ctk.CTkLabel(self.lista, text="SIN CANCIONES\n Descarga una Playlist",
@@ -184,14 +187,44 @@ class APP(ctk.CTk):
                          font=font(11)).grid(row=0, column=0, sticky="w", pady=10)
             return
 
+        if self.indice_actual >= len(self.canciones):
+            self.indice_actual = 0
+
         for i, c in enumerate(self.canciones):
-            color = Green if i == 0 else Pink
-            ctk.CTkLabel(self.lista, text=short_name(c["nombre"], 24), text_color=color, anchor="w", font=font(13, True)).grid(row=i, column=0, sticky="w", pady=10)
-            ctk.CTkLabel(self.lista, text=c["duracion"], text_color=color, font=font(13, True)).grid(row=i, column=1, padx=(20, 0))
+            lbl_nombre = ctk.CTkLabel(self.lista, text=short_name(c["nombre"], 24), 
+                                             anchor="w", font=font(13, True))
+            lbl_nombre.grid(row=i, column=0, sticky="w", pady=10)
+            lbl_dur = ctk.CTkLabel(self.lista, text=c["duracion"], font=font(13, True))
+            lbl_dur.grid(row=i, column=1, padx=(20, 0))
+
+            for lbl in (lbl_nombre, lbl_dur):
+                lbl.bind("<Button-1>", lambda e, idx=i: self.seleccionar_cancion(idx))
+            self.filas.append((lbl_nombre, lbl_dur))
+
+        self.resaltar_seleccion()
+
+    def resaltar_seleccion(self):
+        for i, (lbl_nombre, lbl_dur) in enumerate(self.filas):
+            color = Green if i == self.indice_actual else Pink
+            lbl_nombre.configure(text_color=color)
+            lbl_dur.configure(text_color=color)
+
+    def actualizar_titulo(self):
+        if self.canciones:
+            nombre = self.canciones[self.indice_actual]["nombre"]
+        else:
+            nombre = "SIN CANCION"
+        self.lbl_titulo.configure(text=short_name(nombre, 22))
+
+    def seleccionar_cancion(self, indice):
+        self.indice_actual = indice
+        self.resaltar_seleccion()
+        self.actualizar_titulo()
     
     def refresh_biblioteca(self):
         self.canciones = escanear_biblioteca()
         self.poblar_lista()
+        self.actualizar_titulo()
     
     def crear_panel_player(self, parent):
         panel = ctk.CTkFrame(parent, fg_color="transparent")
