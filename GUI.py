@@ -64,21 +64,22 @@ def escanear_biblioteca():
             except Exception:
                 segundos = None
 
-            if segundos is not None:
-                nuevo_cache[str(ruta)] = {"mtime": st.st_mtime, "size": st.st_size, "seg": segundos}
+        if segundos is not None:
+            nuevo_cache[str(ruta)] = {"mtime": st.st_mtime, "size": st.st_size, "seg": segundos}
 
-            canciones.append({
-                "nombre": ruta.stem,
-                "duracion": format_tmp(segundos) if segundos is not None else "--:--",
-                "segundos": segundos,
-                "ruta": ruta,
-            }) 
-        if nuevo_cache != cache:
-            try:
-                RUTA_CACHE.write_text(json.dumps(nuevo_cache), encoding="utf-8")
-            except Exception:
-                pass
-            return canciones
+        canciones.append({
+            "nombre": ruta.stem,
+            "duracion": format_tmp(segundos) if segundos is not None else "--:--",
+            "segundos": segundos,
+            "ruta": ruta,
+        })
+
+    if nuevo_cache != cache:
+        try:
+            RUTA_CACHE.write_text(json.dumps(nuevo_cache), encoding="utf-8")
+        except Exception:
+            pass
+    return canciones
 
 def font(size, bold=False):
     return ctk.CTkFont(family=Font, size=size, weight="bold" if bold else "normal")
@@ -210,7 +211,7 @@ class APP(ctk.CTk):
         self.crear_panel_player(principal)
 
     def crear_list(self, parent):
-        marco = ctk.CTkScrollableFrame(parent, width=420, fg_color="transparent")
+        marco = ctk.CTkFrame(parent, width=420, fg_color="transparent")
         marco.grid(row=0, column=0, sticky="ns", padx=(0, 30))
         marco.grid_propagate(False)
         marco.grid_rowconfigure(0, weight=1)
@@ -274,7 +275,17 @@ class APP(ctk.CTk):
         hilo.start()
 
     def work_scan(self):
-        self.cola.put({"tipo": "biblioteca", "canciones": escanear_biblioteca()})
+        try:
+            print("Buscando en:", CARPETA_DESCARGA.resolve())
+            print("Existe la carpeta:", CARPETA_DESCARGA.exists())
+            if CARPETA_DESCARGA.exists():
+                print("Archivos:", [p.name for p in CARPETA_DESCARGA.rglob("*")][:10])
+            canciones = escanear_biblioteca()
+            print("Canciones encontradas:", len(canciones))
+        except Exception as e:
+            print("ERROR EN ESCANEO:", repr(e))
+            canciones = []
+        self.cola.put({"tipo": "biblioteca", "canciones": canciones})
     
     def crear_panel_player(self, parent):
         panel = ctk.CTkFrame(parent, fg_color="transparent")
@@ -305,6 +316,12 @@ class APP(ctk.CTk):
                           font=font(18, True)).pack(side="left", padx=(0, 14))
 
     def draw_onda(self, event=None):
+        if self.onda_job:
+            self.after_cancel(self.onda_job)
+        self.onda_job = self.after(60, self.dibujar_onda_ahora)
+
+    def dibujar_onda_ahora(self):
+        self.onda_job = None
         C = self.onda
         C.delete("all")
         W, H = C.winfo_width(), C.winfo_height()
