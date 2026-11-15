@@ -10,6 +10,7 @@ env/
 # --- Configuración y Claves Secretas (¡Muy Importante!) ---
 .env
 config.json
+.json
 *.secrets
 
 # --- Archivos Multimedia / Descargas de Música ---
