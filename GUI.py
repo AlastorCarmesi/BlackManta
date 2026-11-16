@@ -114,6 +114,8 @@ class APP(ctk.CTk):
         except pygame.error as e:
             print("No se puede iniciar audio:", e)
 
+        self.estado = "detenido"
+        self.indice_sonando = None
         self.crear_pestañas()
         self.canciones = []
         self.indice_actual = 0
@@ -279,12 +281,32 @@ class APP(ctk.CTk):
     def reproducir(self):
         if not self.canciones:
             return
+        # En pausa y con la misma canción seleccionada: solo continúa
+        if self.estado == "pausado" and self.indice_sonando == self.indice_actual:
+            pygame.mixer.music.unpause()
+            self.estado = "reproduciendo"
+            return
         cancion = self.canciones[self.indice_actual]
         try:
             pygame.mixer.music.load(str(cancion["ruta"]))
             pygame.mixer.music.play()
+            self.estado = "reproduciendo"
+            self.indice_sonando = self.indice_actual
         except pygame.error as e:
             print("No se pudo reproducir", e)
+
+    def pausar(self):
+        if self.estado == "reproduciendo":
+            pygame.mixer.music.pause()
+            self.estado = "pausado"
+        elif self.estado == "pausado":
+            pygame.mixer.music.unpause()
+            self.estado = "reproduciendo"
+
+    def detener(self):
+        pygame.mixer.music.stop()
+        self.estado = "detenido"
+        self.indice_sonando = None
     
     def refresh_biblioteca(self):
         hilo = threading.Thread(target=self.work_scan, daemon=True)
@@ -326,7 +348,7 @@ class APP(ctk.CTk):
         button = ctk.CTkFrame(panel, fg_color="transparent")
         button.grid(row=4, column=0, sticky="w")
 
-        acciones = {"▶": self.reproducir, "❚❚": None, "■": None}
+        acciones = {"▶": self.reproducir, "❚❚": self.pausar, "■": self.detener}
         for symbol, color in (("▶", Cian), ("❚❚", Pink), ("■", Pink)):
             ctk.CTkButton(button, text=symbol, width=64, height=64, corner_radius=0,
                           fg_color=color, text_color=BG, hover_color=Green,
