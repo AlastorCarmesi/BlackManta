@@ -293,11 +293,12 @@ class APP(ctk.CTk):
         self.indice_actual = indice
         self.actualizar_titulo()
 
-    def reproducir(self):
+    def reproducir(self, reiniciar=False):
         if not self.canciones:
             return
         # En pausa y con la misma canción seleccionada: solo continúa
-        if self.estado == "pausado" and self.indice_sonando == self.indice_actual:
+        if (not reiniciar and self.estado == "pausado" 
+                and self.indice_sonando == self.indice_actual):
             pygame.mixer.music.unpause()
             self.estado = "reproduciendo"
             return
@@ -307,8 +308,11 @@ class APP(ctk.CTk):
             pygame.mixer.music.play()
             self.estado = "reproduciendo"
             self.indice_sonando = self.indice_actual
+
         except pygame.error as e:
             print("No se pudo reproducir", e)
+            self.estado = "detenido"
+            self.indice_sonando = None
 
     def pausar(self):
         if self.estado == "reproduciendo":
@@ -322,6 +326,48 @@ class APP(ctk.CTk):
         pygame.mixer.music.stop()
         self.estado = "detenido"
         self.indice_sonando = None
+
+    def ir_a(self, indice, historial = True):
+        if historial and self.indice_sonando is not None:
+            self.historial.append(self.indice_sonando)
+            del self.historial[:-50]
+        self.indice_actual = indice
+        self.resaltar_seleccion()
+        self.actualizar_titulo()
+        self.reproducir(reiniciar=True)
+
+    def indice_siguiente(self):
+        n = len(self.canciones)
+        if self.aleatorio and n > 1:
+            return random.choice([i for i in range(n) if i != self.indice_actual])
+        return (self.indice_actual + 1) % n
+    
+    def siguiente(self):
+        if self.canciones:
+            self.ir_a(self.indice_siguiente())
+
+    def anterior(self):
+        if not self.canciones:
+            return
+        if self.historial:
+            self.ir_a(self.historial.pop(), historial = False)
+        else:
+            self.ir_a((self.indice_actual - 1) % len(self.canciones), historial = False)
+
+    def cambiar_bucle(self):
+        orden = ["off", "todo", "una"]
+        self.modo_bucle = orden[(orden.index(self.modo_bucle) + 1) % len(orden)]
+        estilos = {
+            "off": ("BUCLE: NO", Black_Pink, Pink),
+            "todo": ("BUCLE: TODO", Cian, BG),
+            "una": ("BUCLE: 1", Green, BG)
+        }
+        texto, fondo, letra = estilos[self.modo_bucle]
+        self.btn_bucle.configure(text = texto, fg_color=fondo, text_color = letra)
+        
+    def cambiar_aleatorio(self):
+    def vigilar_fin(self):
+    def cancion_terminada(self):
     
     def refresh_biblioteca(self):
         hilo = threading.Thread(target=self.work_scan, daemon=True)
