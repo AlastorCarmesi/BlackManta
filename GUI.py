@@ -462,7 +462,10 @@ class APP(ctk.CTk):
 
     def al_cerrar(self):
         self.cancel_event.set()
-        pygame.mixer.music.stop()
+        try: 
+            pygame.mixer.music.stop()
+        except pygame.error:
+            pass
         self.destroy()
 
     # ------------- Pie de pantalla -----------------
