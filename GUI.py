@@ -360,14 +360,32 @@ class APP(ctk.CTk):
                                    fg_color=Black_Pink, progress_color=Pink)
         barra.set(0.4)
         barra.grid(row=3, column=0, sticky="ew", pady=(8, 20))
+        
         button = ctk.CTkFrame(panel, fg_color="transparent")
         button.grid(row=4, column=0, sticky="w")
 
-        acciones = {"▶": self.reproducir, "❚❚": self.pausar, "■": self.detener}
-        for symbol, color in (("▶", Cian), ("❚❚", Pink), ("■", Pink)):
-            ctk.CTkButton(button, text=symbol, width=64, height=64, corner_radius=0,
+        acciones = [("◀◀", Pink, self.anterior), ("▶", Cian, self.reproducir),
+                    ("❚❚", Pink, self.pausar), ("■", Pink, self.detener),
+                    ("▶▶", Pink, self.siguiente)]
+        for symbol, color, accion in acciones:
+            ctk.CTkButton(button, text=symbol, width=56, height=56, corner_radius=0,
                           fg_color=color, text_color=BG, hover_color=Green,
-                          font=font(18, True), command= acciones[symbol]).pack(side="left", padx=(0, 14))
+                          font=font(14, True), command=accion).pack(side="left", padx=(0, 8))
+
+        modos = ctk.CTkFrame(panel, fg_color="transparent")
+        modos.grid(row=5, column=0, sticky="w", pady=(14, 0))
+
+        self.btn_bucle = ctk.CTkButton(
+            modos, text="BUCLE: NO", width=150, height=36, corner_radius=0,
+            fg_color=Black_Pink, text_color=Pink, hover_color=Green,
+            font=font(9, True), command=self.cambiar_bucle)
+        self.btn_bucle.pack(side="left", padx=(0, 8))
+
+        self.btn_aleatorio = ctk.CTkButton(
+            modos, text="ALEAT: NO", width=150, height=36, corner_radius=0,
+            fg_color=Black_Pink, text_color=Pink, hover_color=Green,
+            font=font(9, True), command=self.cambiar_aleatorio)
+        self.btn_aleatorio.pack(side="left")
 
     def draw_onda(self, event=None):
         if self.onda_job:
