@@ -115,6 +115,9 @@ class APP(ctk.CTk):
             print("No se puede iniciar audio:", e)
 
         self.estado = "detenido"
+        self.modo_bucle = "off"
+        self.aleatorio = False
+        self.historial = []
         self.indice_sonando = None
         self.crear_pestañas()
         self.canciones = []
@@ -127,6 +130,7 @@ class APP(ctk.CTk):
         self.protocol("WM_DELETE_WINDOW", self.al_cerrar)
         self.after(100, self.procesar_cola)
         self.refresh_biblioteca()
+        self.after(500, self.vigilar_fin)
 
     # -------------Consola-----------------
     def escribir_console(self, texto):
@@ -154,7 +158,18 @@ class APP(ctk.CTk):
             self.escribir_console(ev["texto"])
 
         elif tipo == "biblioteca":
+            rutas_viejas = [c["ruta"] for c in self.canciones]
+            ruta_actual = (rutas_viejas[self.indice_actual]
+                           if self.indice_actual < len(rutas_viejas) else None)
+            ruta_sonando = (rutas_viejas[self.indice_sonando]
+                            if self.indice_sonando is not None
+                            and self.indice_sonando < len(rutas_viejas) else None)
+
             self.canciones = ev["canciones"]
+            rutas = [c["ruta"] for c in self.canciones]
+            self.indice_actual = rutas.index(ruta_actual) if ruta_actual in rutas else 0
+            self.indice_sonando = rutas.index(ruta_sonando) if ruta_sonando in rutas else None
+            self.historial = []
             self.poblar_lista()
             self.actualizar_titulo()
 
