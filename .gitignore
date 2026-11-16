@@ -11,6 +11,7 @@ env/
 .env
 config.json
 .json
+biblioteca_cache.json
 *.secrets
 
 # --- Archivos Multimedia / Descargas de Música ---
