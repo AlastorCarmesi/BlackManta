@@ -364,10 +364,37 @@ class APP(ctk.CTk):
         }
         texto, fondo, letra = estilos[self.modo_bucle]
         self.btn_bucle.configure(text = texto, fg_color=fondo, text_color = letra)
-        
+
     def cambiar_aleatorio(self):
+        self.aleatorio = not self.aleatorio
+        if self.aleatorio:
+            self.btn_aleatorio.configure(text="ALEAT: SI", fg_color=Cian, text_color = BG)
+        else:
+            self.btn_aleatorio.configure(text="ALEAT: NO", fg_color=Black_Pink, text_color=Pink)
+    
     def vigilar_fin(self):
+        if self.estado == "reproduciendo" and not pygame.mixer.music.get_busy():
+            self.cancion_terminada()
+        self.after(500, self.vigilar_fin)
+
     def cancion_terminada(self):
+        if not self.canciones:
+            self.estado = "detenido"
+            return
+        if self.indice_sonando is not None:
+            self.indice_actual = self.indice_sonando
+
+        if self.modo_bucle == "una":
+            self.ir_a(self.indice_actual, historial=False)
+            return
+
+        ultima = self.indice_actual == len(self.canciones) - 1
+        if self. modo_bucle == "off" and not self.aleatorio and ultima:
+            self.estado = "detenido"
+            self.indice_sonando = None
+            return
+
+        self.ir_a(self.indice_siguiente())
     
     def refresh_biblioteca(self):
         hilo = threading.Thread(target=self.work_scan, daemon=True)
